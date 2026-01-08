@@ -1,53 +1,55 @@
-import { useState, useRef } from 'react';
-import { useAppSelector, useAppDispatch } from '../hooks/useAppStore';
-import { selectPayslips, generatePayslip, selectEmployeePayslips } from '../features/payslips/payslipsSlice';
-import { selectAllEmployees } from '../features/employees/employeesSlice';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { Select } from '../components/Select';
-import { useRoleAccess } from '../hooks/useRoleAccess';
-import { useToast } from '../hooks/useToast';
-import { FileText, Download, Printer } from 'lucide-react';
-import type { Payslip, Employee } from '../types';
+import { useState, useRef } from "react";
+import { useAppSelector, useAppDispatch } from "../hooks/useAppStore";
+import { selectPayslips, generatePayslip, selectEmployeePayslips } from "../features/payslips/payslipsSlice";
+import { selectAllEmployees } from "../features/employees/employeesSlice";
+import { Card } from "../components/Card";
+import { Button } from "../components/Button";
+import { Select } from "../components/Select";
+import { useRoleAccess } from "../hooks/useRoleAccess";
+import { useToast } from "../hooks/useToast";
+import { FileText, Download, Printer } from "lucide-react";
+import type { Payslip, Employee } from "../types";
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export function PayslipsPage() {
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
   const { currentRole, currentUserId, canEdit } = useRoleAccess();
-  
+
   const allPayslips = useAppSelector(selectPayslips);
   const employees = useAppSelector(selectAllEmployees);
   const myPayslips = useAppSelector(selectEmployeePayslips(currentUserId));
-  
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+
+  const [selectedEmployee, setSelectedEmployee] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [viewingPayslip, setViewingPayslip] = useState<Payslip | null>(null);
-  
+
   const printRef = useRef<HTMLDivElement>(null);
 
-  const canViewAll = currentRole === 'admin' || currentRole === 'hr';
+  const canViewAll = currentRole === "admin" || currentRole === "hr";
   const displayPayslips = canViewAll ? allPayslips : myPayslips;
 
   const handleGenerate = () => {
     if (!selectedEmployee) {
-      showToast('Please select an employee', 'error');
+      showToast("Please select an employee", "error");
       return;
     }
-    
+
     const employee = employees.find((e: Employee) => e.id === selectedEmployee);
     if (!employee) return;
-    
-    const baseSalary = employee.designation.includes('CEO') ? 25000 :
-                       employee.designation.includes('Manager') ? 12000 :
-                       employee.designation.includes('Lead') ? 10000 :
-                       employee.designation.includes('Senior') ? 9000 : 7000;
-    
+
+    const baseSalary = employee.designation.includes("CEO")
+      ? 25000
+      : employee.designation.includes("Manager")
+      ? 12000
+      : employee.designation.includes("Lead")
+      ? 10000
+      : employee.designation.includes("Senior")
+      ? 9000
+      : 7000;
+
     const payslip: Payslip = {
       id: `pay-${selectedEmployee}-${selectedYear}-${selectedMonth}`,
       employeeId: selectedEmployee,
@@ -59,19 +61,19 @@ export function PayslipsPage() {
       netPay: Math.round(baseSalary + baseSalary * 0.3 - baseSalary * 0.15),
       generatedAt: new Date().toISOString(),
     };
-    
+
     dispatch(generatePayslip(payslip));
-    showToast('Payslip generated successfully', 'success');
+    showToast("Payslip generated successfully", "success");
   };
 
   const handlePrint = () => {
     if (printRef.current) {
-      const printWindow = window.open('', '_blank');
+      const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Payslip - ${viewingPayslip ? MONTHS[viewingPayslip.month - 1] : ''} ${viewingPayslip?.year}</title>
+              <title>Payslip - ${viewingPayslip ? MONTHS[viewingPayslip.month - 1] : ""} ${viewingPayslip?.year}</title>
               <style>
                 body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
                 .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
@@ -102,18 +104,15 @@ export function PayslipsPage() {
 
   const getEmployeeName = (id: string) => {
     const emp = employees.find((e: Employee) => e.id === id);
-    return emp?.name || 'Unknown';
+    return emp?.name || "Unknown";
   };
 
-  const employeeOptions = [
-    { value: '', label: 'Select Employee' },
-    ...employees.map((emp: Employee) => ({ value: emp.id, label: emp.name }))
-  ];
+  const employeeOptions = [{ value: "", label: "Select Employee" }, ...employees.map((emp: Employee) => ({ value: emp.id, label: emp.name }))];
 
   const monthOptions = MONTHS.map((month, idx) => ({ value: String(idx + 1), label: month }));
   const yearOptions = [
-    { value: '2025', label: '2025' },
-    { value: '2026', label: '2026' },
+    { value: "2025", label: "2025" },
+    { value: "2026", label: "2026" },
   ];
 
   return (
@@ -121,34 +120,20 @@ export function PayslipsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-surface-900">Payslips</h1>
-          <p className="text-surface-500 mt-1">
-            {canViewAll ? 'Generate and manage employee payslips' : 'View your payslips'}
-          </p>
+          <p className="text-surface-500 mt-1">{canViewAll ? "Generate and manage employee payslips" : "View your payslips"}</p>
         </div>
       </div>
 
-      {canViewAll && canEdit('payslips') && (
+      {canViewAll && canEdit("payslips") && (
         <Card>
           <h3 className="font-semibold text-surface-900 mb-4">Generate Payslip</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Select
-              value={selectedEmployee}
-              onChange={e => setSelectedEmployee(e.target.value)}
-              options={employeeOptions}
-            />
-            
-            <Select
-              value={String(selectedMonth)}
-              onChange={e => setSelectedMonth(parseInt(e.target.value))}
-              options={monthOptions}
-            />
-            
-            <Select
-              value={String(selectedYear)}
-              onChange={e => setSelectedYear(parseInt(e.target.value))}
-              options={yearOptions}
-            />
-            
+            <Select value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)} options={employeeOptions} />
+
+            <Select value={String(selectedMonth)} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} options={monthOptions} />
+
+            <Select value={String(selectedYear)} onChange={(e) => setSelectedYear(parseInt(e.target.value))} options={yearOptions} />
+
             <Button onClick={handleGenerate}>
               <FileText className="w-4 h-4" />
               Generate
@@ -161,28 +146,18 @@ export function PayslipsPage() {
         <h3 className="font-semibold text-surface-900 mb-4">Payslip History</h3>
         {displayPayslips.length > 0 ? (
           <div className="space-y-3">
-            {displayPayslips.map(payslip => (
+            {displayPayslips.map((payslip) => (
               <div key={payslip.id} className="flex items-center justify-between p-4 bg-surface-50 rounded-lg">
                 <div>
-                  {canViewAll && (
-                    <p className="font-medium text-surface-900">{getEmployeeName(payslip.employeeId)}</p>
-                  )}
+                  {canViewAll && <p className="font-medium text-surface-900">{getEmployeeName(payslip.employeeId)}</p>}
                   <p className="text-sm text-surface-600">
                     {MONTHS[payslip.month - 1]} {payslip.year}
                   </p>
-                  <p className="text-xs text-surface-400">
-                    Generated {new Date(payslip.generatedAt).toLocaleDateString()}
-                  </p>
+                  <p className="text-xs text-surface-400">Generated {new Date(payslip.generatedAt).toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-lg font-bold text-emerald-600">
-                    ${payslip.netPay.toLocaleString()}
-                  </span>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setViewingPayslip(payslip)}
-                  >
+                  <span className="text-lg font-bold text-emerald-600">${payslip.netPay.toLocaleString()}</span>
+                  <Button variant="ghost" size="sm" onClick={() => setViewingPayslip(payslip)}>
                     <Download className="w-4 h-4" />
                     View
                   </Button>
@@ -211,7 +186,7 @@ export function PayslipsPage() {
                   </Button>
                 </div>
               </div>
-              
+
               <div ref={printRef}>
                 <div className="header text-center border-b-2 border-surface-300 pb-4 mb-6">
                   <div className="logo text-2xl font-bold text-primary-600">INTELEBEE LLC</div>
@@ -219,7 +194,7 @@ export function PayslipsPage() {
                     Payslip for {MONTHS[viewingPayslip.month - 1]} {viewingPayslip.year}
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="p-3 bg-surface-50 rounded-lg">
                     <p className="text-xs text-surface-500">Employee Name</p>
@@ -230,7 +205,7 @@ export function PayslipsPage() {
                     <p className="font-semibold">{viewingPayslip.employeeId.toUpperCase()}</p>
                   </div>
                 </div>
-                
+
                 <table className="w-full mb-6">
                   <thead>
                     <tr className="border-b border-surface-200">
@@ -253,14 +228,12 @@ export function PayslipsPage() {
                     </tr>
                   </tbody>
                 </table>
-                
+
                 <div className="p-4 bg-primary-50 rounded-lg flex items-center justify-between">
                   <span className="text-lg font-semibold text-surface-900">Net Pay</span>
-                  <span className="text-2xl font-bold text-primary-600">
-                    ${viewingPayslip.netPay.toLocaleString()}
-                  </span>
+                  <span className="text-2xl font-bold text-primary-600">${viewingPayslip.netPay.toLocaleString()}</span>
                 </div>
-                
+
                 <div className="footer mt-6 text-center text-surface-400 text-sm">
                   <p>This is a computer-generated document. No signature required.</p>
                   <p className="mt-1">Generated on {new Date(viewingPayslip.generatedAt).toLocaleDateString()}</p>
