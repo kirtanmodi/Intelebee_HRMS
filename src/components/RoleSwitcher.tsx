@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../hooks/useAppStore";
 import { setRole, setCurrentUser } from "../features/auth/authSlice";
 import type { Role } from "../types";
@@ -11,6 +12,7 @@ const roles: { value: Role; label: string; icon: typeof Shield; userId: string }
 ];
 
 export function RoleSwitcher() {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const currentRole = useAppSelector((state) => state.auth.currentRole);
 
@@ -22,6 +24,7 @@ export function RoleSwitcher() {
     if (selected) {
       dispatch(setRole(selected.value));
       dispatch(setCurrentUser(selected.userId));
+      navigate("/dashboard");
     }
   };
 
