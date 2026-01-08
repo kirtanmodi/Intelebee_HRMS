@@ -7,6 +7,8 @@ import {
   Target,
   Briefcase,
   FileText,
+  DollarSign,
+  UserCircle,
   Settings,
   LogOut
 } from 'lucide-react';
@@ -19,7 +21,9 @@ const navItems = [
   { path: '/leaves', label: 'Leaves', icon: CalendarDays },
   { path: '/performance', label: 'Performance', icon: Target },
   { path: '/recruitment', label: 'Recruitment', icon: Briefcase },
+  { path: '/payslips', label: 'Payslips', icon: DollarSign },
   { path: '/policies', label: 'Policies', icon: FileText },
+  { path: '/my-profile', label: 'My Profile', icon: UserCircle },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -28,16 +32,15 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-surface-900 text-white flex flex-col">
-      <div className="px-6 py-6 border-b border-surface-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center">
-            <span className="text-lg font-bold">I</span>
-          </div>
-          <div>
-            <h1 className="font-display font-bold text-lg tracking-tight">INTELEBEE</h1>
-            <p className="text-xs text-surface-400 tracking-widest">HRMS</p>
-          </div>
+      <div className="px-4 py-5 border-b border-surface-800">
+        <div className="flex items-center gap-2">
+          <img 
+            src="/logo.webp" 
+            alt="Intelebee" 
+            className="h-10 w-auto"
+          />
         </div>
+        <p className="text-xs text-surface-400 tracking-widest mt-1 pl-1">HRMS</p>
       </div>
 
       <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">

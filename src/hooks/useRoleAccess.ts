@@ -78,12 +78,29 @@ export function useRoleAccess() {
         return true;
       case '/recruitment':
         return currentRole === 'admin' || currentRole === 'hr';
+      case '/payslips':
+        return true;
       case '/policies':
+        return true;
+      case '/my-profile':
         return true;
       case '/settings':
         return currentRole === 'admin';
       default:
         return true;
+    }
+  };
+
+  const canEdit = (feature: string): boolean => {
+    switch (feature) {
+      case 'payslips':
+        return currentRole === 'admin' || currentRole === 'hr';
+      case 'employees':
+        return currentRole === 'admin' || currentRole === 'hr';
+      case 'attendance':
+        return currentRole === 'admin' || currentRole === 'hr';
+      default:
+        return currentRole === 'admin' || currentRole === 'hr';
     }
   };
 
@@ -106,5 +123,6 @@ export function useRoleAccess() {
     hasPermission,
     canViewRoute,
     isReadOnly,
+    canEdit,
   };
 }

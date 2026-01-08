@@ -3,26 +3,33 @@ import { useAppSelector, useAppDispatch } from '../hooks/useAppStore';
 import { useToast } from '../hooks/useToast';
 import { selectSettings, updatePTOAccrual } from '../features/settings/settingsSlice';
 import { seedData } from '../data/seedData';
-import { setEmployees } from '../features/employees/employeesSlice';
+import { setEmployees, selectAllEmployees } from '../features/employees/employeesSlice';
 import { setAttendance } from '../features/attendance/attendanceSlice';
 import { setLeaves } from '../features/leaves/leavesSlice';
 import { setPerformance } from '../features/performance/performanceSlice';
 import { setRecruitment } from '../features/recruitment/recruitmentSlice';
 import { setPolicies } from '../features/policies/policiesSlice';
+import { selectAuditLogs, clearAuditLogs } from '../features/audit/auditSlice';
+import { setPayslips } from '../features/payslips/payslipsSlice';
+import { setAuditLogs } from '../features/audit/auditSlice';
 import { Card, CardHeader } from '../components/Card';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Badge } from '../components/Badge';
-import { Building2, Clock, RefreshCw, Database, Shield, AlertTriangle } from 'lucide-react';
+import { Building2, Clock, RefreshCw, Database, Shield, AlertTriangle, FileText, Trash2 } from 'lucide-react';
 import { Modal } from '../components/Modal';
 
 export function SettingsPage() {
   const dispatch = useAppDispatch();
   const { showToast } = useToast();
   const settings = useAppSelector(selectSettings);
+  const auditLogs = useAppSelector(selectAuditLogs);
+  const employees = useAppSelector(selectAllEmployees);
 
   const [ptoAccrual, setPtoAccrual] = useState(settings.ptoMonthlyAccrual);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+
+  const getEmployeeName = (id: string) => employees.find(e => e.id === id)?.name || 'System';
 
   const handleSavePTO = () => {
     if (ptoAccrual < 1 || ptoAccrual > 40) {
@@ -41,10 +48,17 @@ export function SettingsPage() {
     dispatch(setPerformance(fresh.performance));
     dispatch(setRecruitment(fresh.recruitment));
     dispatch(setPolicies(fresh.policies));
+    dispatch(setPayslips(fresh.payslips.list));
+    dispatch(setAuditLogs(fresh.audit.logs));
     dispatch(updatePTOAccrual(fresh.settings.ptoMonthlyAccrual));
     setPtoAccrual(fresh.settings.ptoMonthlyAccrual);
     setResetModalOpen(false);
     showToast('Demo data reset successfully', 'success');
+  };
+
+  const handleClearAuditLogs = () => {
+    dispatch(clearAuditLogs());
+    showToast('Audit logs cleared', 'success');
   };
 
   return (
@@ -145,6 +159,62 @@ export function SettingsPage() {
               </Button>
             </div>
           </div>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <CardHeader 
+              title="Audit Logs" 
+              description="System activity history (Admin only)"
+            />
+            {auditLogs.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={handleClearAuditLogs}>
+                <Trash2 className="w-4 h-4" />
+                Clear Logs
+              </Button>
+            )}
+          </div>
+          {auditLogs.length > 0 ? (
+            <div className="border border-surface-200 rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-surface-50">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-surface-600">Timestamp</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-surface-600">User</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-surface-600">Action</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-surface-600">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-100">
+                  {auditLogs.slice(0, 20).map(log => (
+                    <tr key={log.id} className="hover:bg-surface-50">
+                      <td className="px-4 py-3 text-sm text-surface-500">
+                        {new Date(log.timestamp).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-surface-900">
+                        {getEmployeeName(log.userId)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={
+                          log.action.includes('APPROVED') ? 'success' :
+                          log.action.includes('REJECTED') ? 'danger' :
+                          log.action.includes('LOGIN') ? 'info' : 'default'
+                        }>
+                          {log.action}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-surface-600">{log.details}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-surface-500">
+              <FileText className="w-12 h-12 mx-auto mb-3 text-surface-300" />
+              <p>No audit logs available</p>
+            </div>
+          )}
         </Card>
 
         <Card className="lg:col-span-2">

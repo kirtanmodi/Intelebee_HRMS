@@ -20,10 +20,11 @@ export function LoginPage() {
       
       <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl mb-4">
-            <span className="text-3xl font-bold text-white">I</span>
-          </div>
-          <h1 className="text-3xl font-display font-bold text-white">INTELEBEE</h1>
+          <img 
+            src="/logo.webp" 
+            alt="Intelebee" 
+            className="h-16 w-auto mx-auto mb-4"
+          />
           <p className="text-surface-400 mt-2">Human Resource Management System</p>
         </div>
 

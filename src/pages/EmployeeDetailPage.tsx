@@ -180,7 +180,7 @@ export function EmployeeDetailPage() {
 
             {activeTab === 'documents' && (
               <div className="space-y-3">
-                {['Offer Letter', 'ID Proof', 'Address Proof', 'Experience Letters'].map(doc => (
+                {['Offer Letter', 'ID Proof', 'Address Proof', 'Contracts'].map(doc => (
                   <div key={doc} className="flex items-center justify-between p-4 bg-surface-50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <FileText className="w-5 h-5 text-surface-400" />

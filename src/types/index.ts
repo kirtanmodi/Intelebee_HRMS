@@ -125,3 +125,23 @@ export interface Settings {
   companyName: string;
   ptoMonthlyAccrual: number;
 }
+
+export interface Payslip {
+  id: string;
+  employeeId: string;
+  month: number;
+  year: number;
+  basicSalary: number;
+  allowances: number;
+  deductions: number;
+  netPay: number;
+  generatedAt: string;
+}
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  action: string;
+  details: string;
+  timestamp: string;
+}

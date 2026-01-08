@@ -18,9 +18,11 @@ import { Badge } from '../components/Badge';
 import { Modal } from '../components/Modal';
 import { Input } from '../components/Input';
 import { Select } from '../components/Select';
-import { Plus, Target, Star, TrendingUp, Edit2 } from 'lucide-react';
+import { Plus, Target, Star, TrendingUp, Edit2, ClipboardCheck } from 'lucide-react';
 import type { Goal, Review } from '../types';
 import { generateId, formatDate } from '../utils/dates';
+
+type GoalPeriod = 'all' | 'quarterly' | 'annual';
 
 export function PerformancePage() {
   const dispatch = useAppDispatch();
@@ -34,9 +36,11 @@ export function PerformancePage() {
   const allEmployees = useAppSelector(selectAllEmployees);
   const teamMembers = useAppSelector(selectTeamMembers(currentUserId));
 
-  const [activeTab, setActiveTab] = useState<'goals' | 'reviews'>('goals');
+  const [activeTab, setActiveTab] = useState<'goals' | 'reviews' | 'self-eval'>('goals');
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selfEvalModalOpen, setSelfEvalModalOpen] = useState(false);
+  const [goalPeriodFilter, setGoalPeriodFilter] = useState<GoalPeriod>('all');
   const [editingGoal, setEditingGoal] = useState<Partial<Goal> | null>(null);
   const [newReview, setNewReview] = useState({
     employeeId: '',
@@ -44,11 +48,36 @@ export function PerformancePage() {
     rating: 3,
     feedback: '',
   });
+  const [selfEval, setSelfEval] = useState({
+    goalId: '',
+    achievements: '',
+    challenges: '',
+    improvements: '',
+    selfRating: 3,
+  });
 
-  const displayGoals = currentRole === 'employee' ? myGoals : 
-                       currentRole === 'manager' ? allGoals.filter(g => 
-                         teamMembers.some(m => m.id === g.employeeId) || g.employeeId === currentUserId
-                       ) : allGoals;
+  const filterByPeriod = (goals: Goal[]) => {
+    if (goalPeriodFilter === 'all') return goals;
+    const now = new Date();
+    const quarterEnd = new Date(now.getFullYear(), Math.ceil((now.getMonth() + 1) / 3) * 3, 0);
+    const yearEnd = new Date(now.getFullYear(), 11, 31);
+    
+    return goals.filter(g => {
+      const dueDate = new Date(g.dueDate);
+      if (goalPeriodFilter === 'quarterly') {
+        return dueDate <= quarterEnd;
+      } else {
+        return dueDate <= yearEnd;
+      }
+    });
+  };
+
+  const baseGoals = currentRole === 'employee' ? myGoals : 
+                    currentRole === 'manager' ? allGoals.filter(g => 
+                      teamMembers.some(m => m.id === g.employeeId) || g.employeeId === currentUserId
+                    ) : allGoals;
+  
+  const displayGoals = filterByPeriod(baseGoals);
 
   const displayReviews = currentRole === 'employee' ? myReviews :
                          currentRole === 'manager' ? allReviews.filter(r =>
@@ -126,18 +155,26 @@ export function PerformancePage() {
           <h2 className="text-2xl font-bold text-surface-900">Performance</h2>
           <p className="text-surface-500 mt-1">Goals and performance reviews</p>
         </div>
-        {canEditGoals && (
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setReviewModalOpen(true)}>
-              <Star className="w-4 h-4" />
-              Add Review
+        <div className="flex gap-2">
+          {currentRole === 'employee' && myGoals.length > 0 && (
+            <Button variant="secondary" onClick={() => setSelfEvalModalOpen(true)}>
+              <ClipboardCheck className="w-4 h-4" />
+              Self Evaluation
             </Button>
-            <Button onClick={() => { setEditingGoal({ progress: 0 }); setGoalModalOpen(true); }}>
-              <Plus className="w-4 h-4" />
-              Create Goal
-            </Button>
-          </div>
-        )}
+          )}
+          {canEditGoals && (
+            <>
+              <Button variant="secondary" onClick={() => setReviewModalOpen(true)}>
+                <Star className="w-4 h-4" />
+                Add Review
+              </Button>
+              <Button onClick={() => { setEditingGoal({ progress: 0 }); setGoalModalOpen(true); }}>
+                <Plus className="w-4 h-4" />
+                Create Goal
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -170,24 +207,53 @@ export function PerformancePage() {
 
       <Card padding="none">
         <div className="border-b border-surface-200">
-          <nav className="flex gap-1 p-2">
-            <button
-              onClick={() => setActiveTab('goals')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'goals' ? 'bg-primary-100 text-primary-700' : 'text-surface-600 hover:bg-surface-100'
-              }`}
-            >
-              Goals
-            </button>
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === 'reviews' ? 'bg-primary-100 text-primary-700' : 'text-surface-600 hover:bg-surface-100'
-              }`}
-            >
-              Reviews
-            </button>
-          </nav>
+          <div className="flex items-center justify-between p-2">
+            <nav className="flex gap-1">
+              <button
+                onClick={() => setActiveTab('goals')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'goals' ? 'bg-primary-100 text-primary-700' : 'text-surface-600 hover:bg-surface-100'
+                }`}
+              >
+                Goals
+              </button>
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'reviews' ? 'bg-primary-100 text-primary-700' : 'text-surface-600 hover:bg-surface-100'
+                }`}
+              >
+                Reviews
+              </button>
+              {currentRole === 'employee' && (
+                <button
+                  onClick={() => setActiveTab('self-eval')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === 'self-eval' ? 'bg-primary-100 text-primary-700' : 'text-surface-600 hover:bg-surface-100'
+                  }`}
+                >
+                  My Self Evaluations
+                </button>
+              )}
+            </nav>
+            {activeTab === 'goals' && (
+              <div className="flex gap-1 bg-surface-100 rounded-lg p-1">
+                {(['all', 'quarterly', 'annual'] as GoalPeriod[]).map(period => (
+                  <button
+                    key={period}
+                    onClick={() => setGoalPeriodFilter(period)}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-colors capitalize ${
+                      goalPeriodFilter === period 
+                        ? 'bg-white text-primary-700 shadow-sm' 
+                        : 'text-surface-600 hover:text-surface-800'
+                    }`}
+                  >
+                    {period}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {activeTab === 'goals' ? (
@@ -249,7 +315,7 @@ export function PerformancePage() {
               <div className="py-12 text-center text-surface-500">No goals found</div>
             )}
           </div>
-        ) : (
+        ) : activeTab === 'reviews' ? (
           <div className="divide-y divide-surface-100">
             {displayReviews.length > 0 ? displayReviews.map(review => (
               <div key={review.id} className="p-6">
@@ -279,6 +345,12 @@ export function PerformancePage() {
             )) : (
               <div className="py-12 text-center text-surface-500">No reviews found</div>
             )}
+          </div>
+        ) : (
+          <div className="p-6">
+            <p className="text-surface-500 text-center py-8">
+              Your self evaluations will appear here. Click "Self Evaluation" to submit one.
+            </p>
           </div>
         )}
       </Card>
@@ -377,6 +449,78 @@ export function PerformancePage() {
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="secondary" onClick={() => setReviewModalOpen(false)}>Cancel</Button>
             <Button onClick={handleSaveReview}>Submit Review</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={selfEvalModalOpen} onClose={() => setSelfEvalModalOpen(false)} title="Self Evaluation" size="lg">
+        <div className="space-y-4">
+          <Select
+            label="Select Goal to Evaluate"
+            value={selfEval.goalId}
+            onChange={e => setSelfEval({ ...selfEval, goalId: e.target.value })}
+            options={[
+              { value: '', label: 'Select a goal' },
+              ...myGoals.map(g => ({ value: g.id, label: g.title }))
+            ]}
+          />
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1.5">Key Achievements</label>
+            <textarea
+              value={selfEval.achievements}
+              onChange={e => setSelfEval({ ...selfEval, achievements: e.target.value })}
+              className="w-full px-3 py-2 border border-surface-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              rows={3}
+              placeholder="List your key achievements for this goal..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1.5">Challenges Faced</label>
+            <textarea
+              value={selfEval.challenges}
+              onChange={e => setSelfEval({ ...selfEval, challenges: e.target.value })}
+              className="w-full px-3 py-2 border border-surface-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              rows={3}
+              placeholder="Describe challenges you faced..."
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1.5">Areas for Improvement</label>
+            <textarea
+              value={selfEval.improvements}
+              onChange={e => setSelfEval({ ...selfEval, improvements: e.target.value })}
+              className="w-full px-3 py-2 border border-surface-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              rows={3}
+              placeholder="What would you do differently next time?"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-surface-700 mb-1.5">Self Rating</label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map(star => (
+                <button
+                  key={star}
+                  onClick={() => setSelfEval({ ...selfEval, selfRating: star })}
+                  className="p-2"
+                >
+                  <Star
+                    className={`w-8 h-8 ${star <= selfEval.selfRating ? 'text-amber-400 fill-amber-400' : 'text-surface-300'}`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={() => setSelfEvalModalOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              if (!selfEval.goalId) {
+                showToast('Please select a goal', 'error');
+                return;
+              }
+              showToast('Self evaluation submitted', 'success');
+              setSelfEvalModalOpen(false);
+              setSelfEval({ goalId: '', achievements: '', challenges: '', improvements: '', selfRating: 3 });
+            }}>Submit Evaluation</Button>
           </div>
         </div>
       </Modal>

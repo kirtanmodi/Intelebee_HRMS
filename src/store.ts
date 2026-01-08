@@ -7,6 +7,8 @@ import performanceReducer from './features/performance/performanceSlice';
 import recruitmentReducer from './features/recruitment/recruitmentSlice';
 import policiesReducer from './features/policies/policiesSlice';
 import settingsReducer from './features/settings/settingsSlice';
+import payslipsReducer from './features/payslips/payslipsSlice';
+import auditReducer from './features/audit/auditSlice';
 import { loadState, saveState } from './utils/localStorage';
 import { seedData, getInitialState } from './data/seedData';
 
@@ -19,6 +21,8 @@ const rootReducer = combineReducers({
   recruitment: recruitmentReducer,
   policies: policiesReducer,
   settings: settingsReducer,
+  payslips: payslipsReducer,
+  audit: auditReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
